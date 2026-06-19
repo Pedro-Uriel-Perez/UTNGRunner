@@ -40,21 +40,17 @@ class GameRenderer {
         isAntiAlias = true
     }
 
-    fun render(canvas: Canvas, state: GameState) {
-        // Use actual canvas dimensions to fill the whole screen
-        val w = canvas.width.toFloat()
-        val h = canvas.height.toFloat()
-        val groundY = if (state.groundY > 0f) state.groundY else h * 0.72f
+    fun render(canvas: Canvas, state: GameState, canvasWidth: Float, canvasHeight: Float) {
+        val groundY = if (state.groundY > 0f) state.groundY else canvasHeight * 0.72f
+        val cx = canvasWidth / 2f
+        val cy = canvasHeight / 2f
 
-        canvas.drawRect(0f, 0f, w, h, bgPaint)
-        canvas.drawRect(0f, groundY, w, h, groundPaint)
-
-        val cx = w / 2f
-        val cy = h / 2f
+        canvas.drawRect(0f, 0f, canvasWidth, canvasHeight, bgPaint)
+        canvas.drawRect(0f, groundY, canvasWidth, canvasHeight, groundPaint)
 
         when (state.status) {
             GameStatus.IDLE -> drawIdleScreen(canvas, cx, cy, state)
-            GameStatus.RUNNING -> drawRunningScreen(canvas, w, state)
+            GameStatus.RUNNING -> drawRunningScreen(canvas, canvasWidth, state)
             GameStatus.GAME_OVER -> drawGameOverScreen(canvas, cx, cy, state)
         }
     }

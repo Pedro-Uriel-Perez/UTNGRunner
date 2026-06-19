@@ -53,8 +53,11 @@ fun GameScreen(viewModel: GameViewModel) {
                     true
                 }
         ) {
+            // size.width/height from DrawScope is the real pixel size — never 0
+            val w = size.width
+            val h = size.height
             drawIntoCanvas { canvas ->
-                renderer.render(canvas.nativeCanvas, state)
+                renderer.render(canvas.nativeCanvas, state, w, h)
             }
         }
     }
