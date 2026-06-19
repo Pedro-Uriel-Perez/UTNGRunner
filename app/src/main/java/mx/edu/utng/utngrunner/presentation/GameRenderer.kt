@@ -41,29 +41,32 @@ class GameRenderer {
     }
 
     fun render(canvas: Canvas, state: GameState) {
-        val w = state.screenWidth
-        val h = state.screenHeight
+        // Use actual canvas dimensions to fill the whole screen
+        val w = canvas.width.toFloat()
+        val h = canvas.height.toFloat()
+        val groundY = if (state.groundY > 0f) state.groundY else h * 0.72f
 
         canvas.drawRect(0f, 0f, w, h, bgPaint)
-        canvas.drawRect(0f, state.groundY, w, h, groundPaint)
+        canvas.drawRect(0f, groundY, w, h, groundPaint)
+
+        val cx = w / 2f
+        val cy = h / 2f
 
         when (state.status) {
-            GameStatus.IDLE -> drawIdleScreen(canvas, state)
-            GameStatus.RUNNING -> drawRunningScreen(canvas, state)
-            GameStatus.GAME_OVER -> drawGameOverScreen(canvas, state)
+            GameStatus.IDLE -> drawIdleScreen(canvas, cx, cy, state)
+            GameStatus.RUNNING -> drawRunningScreen(canvas, w, state)
+            GameStatus.GAME_OVER -> drawGameOverScreen(canvas, cx, cy, state)
         }
     }
 
-    private fun drawIdleScreen(canvas: Canvas, state: GameState) {
-        val cx = state.screenWidth / 2f
-        val cy = state.screenHeight / 2f
+    private fun drawIdleScreen(canvas: Canvas, cx: Float, cy: Float, state: GameState) {
         canvas.drawText("UTNG Runner", cx, cy - 40f, titlePaint)
         canvas.drawText("Gira la corona para", cx, cy, subPaint)
         canvas.drawText("iniciar el juego", cx, cy + 28f, subPaint)
         canvas.drawText("Record: ${state.highScore}", cx, cy + 64f, subPaint)
     }
 
-    private fun drawRunningScreen(canvas: Canvas, state: GameState) {
+    private fun drawRunningScreen(canvas: Canvas, w: Float, state: GameState) {
         val p = state.player
         val playerRect = RectF(p.x, p.y, p.x + p.width, p.y + p.height)
         canvas.drawRoundRect(playerRect, 8f, 8f, playerPaint)
@@ -80,13 +83,11 @@ class GameRenderer {
         canvas.drawText("Pts: ${state.score}", 10f, 30f, scorePaint)
         canvas.drawText("Vidas: ${"❤".repeat(state.lives.coerceAtLeast(0))}", 10f, 58f, scorePaint)
         if (state.heartRate > 0) {
-            canvas.drawText("FC: ${state.heartRate} bpm", state.screenWidth / 2f, 30f, heartPaint)
+            canvas.drawText("FC: ${state.heartRate} bpm", w / 2f, 30f, heartPaint)
         }
     }
 
-    private fun drawGameOverScreen(canvas: Canvas, state: GameState) {
-        val cx = state.screenWidth / 2f
-        val cy = state.screenHeight / 2f
+    private fun drawGameOverScreen(canvas: Canvas, cx: Float, cy: Float, state: GameState) {
         canvas.drawText("Game Over", cx, cy - 50f, titlePaint)
         canvas.drawText("Puntos: ${state.score}", cx, cy - 10f, subPaint)
         canvas.drawText("Record: ${state.highScore}", cx, cy + 24f, subPaint)
