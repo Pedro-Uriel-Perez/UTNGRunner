@@ -2,6 +2,8 @@ package mx.edu.utng.utngrunner.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +25,7 @@ class GameViewModel(
     val gameState: StateFlow<GameState> = _gameState.asStateFlow()
 
     private var frameCount = 0
+    private var gameLoopJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -33,6 +36,7 @@ class GameViewModel(
     }
 
     fun startGame(screenWidth: Float, screenHeight: Float) {
+        gameLoopJob?.cancel()
         frameCount = 0
         _gameState.value = GameState(
             status = GameStatus.RUNNING,
@@ -41,7 +45,7 @@ class GameViewModel(
             groundY = screenHeight * 0.72f,
             highScore = _gameState.value.highScore
         )
-        viewModelScope.launch {
+        gameLoopJob = viewModelScope.launch(Dispatchers.Default) {
             while (_gameState.value.status == GameStatus.RUNNING) {
                 frameCount++
                 _gameState.value = updateGame(_gameState.value, frameCount)
