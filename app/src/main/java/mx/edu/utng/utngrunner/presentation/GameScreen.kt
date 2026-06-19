@@ -3,6 +3,7 @@ package mx.edu.utng.utngrunner.presentation
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,11 +23,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.rotary.onRotaryScrollEvent
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.Text
+import kotlinx.coroutines.delay
 import mx.edu.utng.utngrunner.domain.model.GameStatus
 
 private val BG = Color(0xFF1A1A2E)
@@ -45,7 +47,7 @@ fun GameScreen(viewModel: GameViewModel) {
         try { focusRequester.requestFocus() } catch (_: Exception) {}
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .focusRequester(focusRequester)
@@ -58,14 +60,19 @@ fun GameScreen(viewModel: GameViewModel) {
                 }
                 true
             }
-            .onGloballyPositioned { coords ->
-                val w = coords.size.width.toFloat()
-                val h = coords.size.height.toFloat()
-                if (w > 0f && state.status == GameStatus.IDLE) {
-                    viewModel.startGame(w, h)
-                }
-            }
     ) {
+        val density = LocalDensity.current
+        val sw = with(density) { maxWidth.toPx() }
+        val sh = with(density) { maxHeight.toPx() }
+
+        // Auto-start: inicia solo cuando el estado vuelve a IDLE
+        LaunchedEffect(sw, state.status) {
+            if (sw > 0f && state.status == GameStatus.IDLE) {
+                delay(1500)
+                viewModel.startGame(sw, sh)
+            }
+        }
+
         Canvas(modifier = Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
@@ -95,7 +102,11 @@ fun GameScreen(viewModel: GameViewModel) {
                     )
                 }
                 state.coins.forEach { coin ->
-                    drawCircle(color = COIN_COLOR, radius = coin.radius, center = Offset(coin.x, coin.y))
+                    drawCircle(
+                        color = COIN_COLOR,
+                        radius = coin.radius,
+                        center = Offset(coin.x, coin.y)
+                    )
                 }
             }
         }
@@ -108,25 +119,26 @@ fun GameScreen(viewModel: GameViewModel) {
                 ) {
                     Text("UTNG Runner", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(6.dp))
-                    Text("Gira la corona para", color = TEXT_DIM, fontSize = 13.sp)
-                    Text("iniciar el juego", color = TEXT_DIM, fontSize = 13.sp)
+                    Text("Iniciando...", color = TEXT_DIM, fontSize = 13.sp)
                     Spacer(Modifier.height(6.dp))
                     Text("Record: ${state.highScore}", color = TEXT_DIM, fontSize = 13.sp)
                 }
             }
             GameStatus.RUNNING -> {
-                Text(
-                    "Pts: ${state.score}",
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
-                )
-                Text(
-                    "❤".repeat(state.lives.coerceAtLeast(0)),
-                    color = ACCENT,
-                    fontSize = 14.sp,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        "Pts: ${state.score}",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
+                    )
+                    Text(
+                        "❤".repeat(state.lives.coerceAtLeast(0)),
+                        color = ACCENT,
+                        fontSize = 14.sp,
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                    )
+                }
             }
             GameStatus.GAME_OVER -> {
                 Column(

@@ -11,14 +11,14 @@ private const val GRAVITY = 1.5f
 private const val JUMP_VELOCITY = -18f
 private const val OBSTACLE_SPEED = 6f
 private const val COIN_SPEED = 5f
-private const val SPAWN_INTERVAL = 60
+private const val SPAWN_INTERVAL = 90
 
 fun updateGame(state: GameState, frameCount: Int): GameState {
     if (state.status != GameStatus.RUNNING) return state
 
     val player = updatePlayer(state.player, state.groundY)
-    val obstacles = updateObstacles(state.obstacles, state.screenWidth, frameCount)
-    val coins = updateCoins(state.coins, state.screenWidth, frameCount)
+    val obstacles = updateObstacles(state.obstacles, state.screenWidth, state.groundY, frameCount)
+    val coins = updateCoins(state.coins, state.screenWidth, state.groundY, frameCount)
 
     val (coinsAfterCollect, coinsCollected) = collectCoins(player, coins)
     val newScore = state.score + coinsCollected * 10 + 1
@@ -56,17 +56,17 @@ private fun updatePlayer(player: Player, groundY: Float): Player {
     }
 }
 
-private fun updateObstacles(obstacles: List<Obstacle>, screenWidth: Float, frame: Int): List<Obstacle> {
+private fun updateObstacles(obstacles: List<Obstacle>, screenWidth: Float, groundY: Float, frame: Int): List<Obstacle> {
     val moved = obstacles.map { it.copy(x = it.x - OBSTACLE_SPEED) }.filter { it.x + it.width > 0 }
     return if (frame % SPAWN_INTERVAL == 0) {
-        moved + Obstacle(x = screenWidth, y = 230f)
+        moved + Obstacle(x = screenWidth, y = groundY - 50f)
     } else moved
 }
 
-private fun updateCoins(coins: List<Coin>, screenWidth: Float, frame: Int): List<Coin> {
+private fun updateCoins(coins: List<Coin>, screenWidth: Float, groundY: Float, frame: Int): List<Coin> {
     val moved = coins.map { it.copy(x = it.x - COIN_SPEED) }.filter { it.x + it.radius > 0 && !it.collected }
     return if (frame % (SPAWN_INTERVAL / 2) == 0 && Random.nextFloat() > 0.4f) {
-        moved + Coin(x = screenWidth, y = Random.nextFloat() * 100f + 120f)
+        moved + Coin(x = screenWidth, y = groundY - Random.nextFloat() * 100f - 30f)
     } else moved
 }
 

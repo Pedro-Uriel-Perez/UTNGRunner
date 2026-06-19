@@ -38,12 +38,17 @@ class GameViewModel(
     fun startGame(screenWidth: Float, screenHeight: Float) {
         gameLoopJob?.cancel()
         frameCount = 0
+        val groundY = screenHeight * 0.72f
         _gameState.value = GameState(
             status = GameStatus.RUNNING,
             screenWidth = screenWidth,
             screenHeight = screenHeight,
-            groundY = screenHeight * 0.72f,
-            highScore = _gameState.value.highScore
+            groundY = groundY,
+            highScore = _gameState.value.highScore,
+            lives = 3,
+            player = mx.edu.utng.utngrunner.domain.model.Player(
+                x = 50f, y = groundY - 40f, width = 40f, height = 40f
+            )
         )
         gameLoopJob = viewModelScope.launch(Dispatchers.Default) {
             while (_gameState.value.status == GameStatus.RUNNING) {
