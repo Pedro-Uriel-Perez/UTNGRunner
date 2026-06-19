@@ -2,7 +2,7 @@ package mx.edu.utng.utngrunner.presentation
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,6 +15,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.rotary.onRotaryScrollEvent
+import androidx.compose.ui.platform.LocalDensity
 import mx.edu.utng.utngrunner.domain.model.GameStatus
 
 @Composable
@@ -25,28 +26,31 @@ fun GameScreen(viewModel: GameViewModel) {
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .focusRequester(focusRequester)
-            .focusable()
-            .onRotaryScrollEvent { event ->
-                when (state.status) {
-                    GameStatus.IDLE -> { /* started by startGame below */ }
-                    GameStatus.RUNNING -> viewModel.jump()
-                    GameStatus.GAME_OVER -> viewModel.resetGame()
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val density = LocalDensity.current
+        val screenWidth = with(density) { maxWidth.toPx() }
+        val screenHeight = with(density) { maxHeight.toPx() }
+
+        LaunchedEffect(screenWidth, screenHeight) {
+            if (screenWidth > 0f && screenHeight > 0f && state.status == GameStatus.IDLE) {
+                viewModel.startGame(screenWidth, screenHeight)
+            }
+        }
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .focusRequester(focusRequester)
+                .focusable()
+                .onRotaryScrollEvent { _ ->
+                    when (state.status) {
+                        GameStatus.IDLE -> viewModel.startGame(screenWidth, screenHeight)
+                        GameStatus.RUNNING -> viewModel.jump()
+                        GameStatus.GAME_OVER -> viewModel.resetGame()
+                    }
+                    true
                 }
-                true
-            }
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val w = size.width
-            val h = size.height
-
-            if (state.status == GameStatus.IDLE && w > 0f && h > 0f) {
-                viewModel.startGame(w, h)
-            }
-
+        ) {
             drawIntoCanvas { canvas ->
                 renderer.render(canvas.nativeCanvas, state)
             }
